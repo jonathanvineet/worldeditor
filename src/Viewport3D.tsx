@@ -79,9 +79,9 @@ function ShadowFloor() {
 // Selectable entity mesh - receives selection from context
 function EntityMesh({ entity }: { entity: Entity }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const { selectedId, setSelectedId } = useApp()
+  const { selectedId, setSelectedId, hoveredId, setHoveredId } = useApp()
   const isSelected = selectedId === entity.id
-  const [hovered, setHovered] = useState(false)
+  const isHovered = hoveredId === entity.id
 
   const geomProps = useMemo(() => {
     switch (entity.type) {
@@ -103,17 +103,21 @@ function EntityMesh({ entity }: { entity: Entity }) {
     setSelectedId(entity.id)
   }
 
-  const handlePointerOver = () => setHovered(true)
-  const handlePointerOut = () => setHovered(false)
+  const handlePointerOver = () => setHoveredId(entity.id)
+  const handlePointerOut = () => setHoveredId(null)
 
   useEffect(() => {
-    document.body.style.cursor = hovered ? 'pointer' : 'default'
-  }, [hovered])
+    document.body.style.cursor = isHovered ? 'pointer' : 'default'
+  }, [isHovered])
 
-  // Highlight effect
-  const emissiveIntensity = hovered ? 0.15 : isSelected ? 0.3 : 0
+  // Emissive intensity based on selection and hover
+  // Selected: 0.3 (blue), Hovered (not selected): 0.15 (orange), None: 0
+  const emissiveIntensity = isSelected ? 0.3 : isHovered ? 0.15 : 0
 
-  // Selection outline effect
+  // Emissive color: blue for selected, orange for hovered
+  const emissiveColor = isSelected ? '#0080ff' : isHovered ? '#ff8000' : '#000000'
+
+  // Selection outline effect - only for selected
   const outlineScale = isSelected ? 1.02 : 1
 
   return (
@@ -133,7 +137,7 @@ function EntityMesh({ entity }: { entity: Entity }) {
         {geomProps.geometry}
         <meshStandardMaterial
           color={entity.color}
-          emissive={isSelected || hovered ? '#ffffff' : '#000000'}
+          emissive={emissiveColor}
           emissiveIntensity={emissiveIntensity}
           roughness={0.7}
           metalness={0.1}
@@ -155,7 +159,30 @@ function EntityMesh({ entity }: { entity: Entity }) {
             <sphereGeometry args={[0.25, 16, 16]} />
           )}
           <meshBasicMaterial
-            color="#00a8ff"
+            color="#0080ff"
+            transparent
+            opacity={0.15}
+            depthTest={false}
+          />
+        </mesh>
+      )}
+
+      {/* Hover outline for non-selected entities */}
+      {isHovered && !isSelected && entity.type !== 'ground' && (
+        <mesh
+          position={entity.position}
+          rotation={entity.rotation}
+          scale={[entity.scale[0] * 1.03, entity.scale[1] * 1.03, entity.scale[2] * 1.03]}
+        >
+          {entity.type === 'box' ? (
+            <boxGeometry args={[1, 1, 1]} />
+          ) : entity.type === 'sphere' ? (
+            <sphereGeometry args={[0.5, 32, 32]} />
+          ) : (
+            <sphereGeometry args={[0.25, 16, 16]} />
+          )}
+          <meshBasicMaterial
+            color="#ff8000"
             transparent
             opacity={0.15}
             depthTest={false}

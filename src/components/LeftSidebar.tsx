@@ -51,12 +51,18 @@ function TreeNode({ node, depth, selectedId, onSelect }: {
   const [expanded, setExpanded] = useState(node.expanded ?? true)
   const hasChildren = node.children && node.children.length > 0
 
+  const handleClick = () => {
+    if (node.type !== 'world' && node.type !== 'folder') {
+      onSelect(node.id)
+    }
+  }
+
   return (
     <div className="tree-node">
       <div
         className={`tree-item ${selectedId === node.id ? 'selected' : ''}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
-        onClick={() => { if (node.type !== 'world' && node.type !== 'folder') onSelect(node.id) }}
+        onClick={handleClick}
       >
         {hasChildren ? (
           <span

@@ -23,6 +23,8 @@ interface Entity {
 interface AppContextType {
   selectedId: string | null
   setSelectedId: (id: string | null) => void
+  hoveredId: string | null
+  setHoveredId: (id: string | null) => void
   entities: Entity[]
   selectedEntity: Entity | null
 }
@@ -30,6 +32,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType>({
   selectedId: null,
   setSelectedId: () => {},
+  hoveredId: null,
+  setHoveredId: () => {},
   entities: [],
   selectedEntity: null,
 })
@@ -48,10 +52,11 @@ const ENTITIES: Entity[] = [
 
 function AppContent() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const selectedEntity = ENTITIES.find(e => e.id === selectedId) || null
 
   return (
-    <AppContext.Provider value={{ selectedId, setSelectedId, entities: ENTITIES, selectedEntity }}>
+    <AppContext.Provider value={{ selectedId, setSelectedId, hoveredId, setHoveredId, entities: ENTITIES, selectedEntity }}>
       <div className="app">
         <MenuBar />
         <Toolbar />
