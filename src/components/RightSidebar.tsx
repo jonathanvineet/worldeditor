@@ -1,26 +1,13 @@
 import { useState } from 'react'
 import './RightSidebar.css'
 
-interface PropRow {
-  label: string
-  value: string
-  editable?: boolean
-  unit?: string
-  color?: string
-}
-
-function PropField({ label, value, unit, color }: PropRow) {
+function PropField({ label, value, unit }: { label: string; value: string; unit?: string }) {
   const [val, setVal] = useState(value)
   return (
     <div className="prop-row">
       <span className="prop-label">{label}</span>
-      <div className="prop-value-wrap">
-        <input
-          className="prop-input"
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          style={color ? { color } : undefined}
-        />
+      <div className="prop-value">
+        <input className="prop-input" value={val} onChange={(e) => setVal(e.target.value)} />
         {unit && <span className="prop-unit">{unit}</span>}
       </div>
     </div>
@@ -31,79 +18,71 @@ function PropSection({ title, children, defaultOpen = true }: { title: string; c
   const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="prop-section">
-      <button className="prop-section-header" onClick={() => setOpen(!open)}>
-        <span className={`prop-caret ${open ? 'open' : ''}`}>▶</span>
+      <button className="prop-header" onClick={() => setOpen(!open)}>
+        <span className={`prop-arrow ${open ? 'open' : ''}`}>▶</span>
         <span>{title}</span>
       </button>
-      {open && <div className="prop-section-body">{children}</div>}
+      {open && <div className="prop-body">{children}</div>}
     </div>
   )
 }
 
-function XYZField({ label, x, y, z, unit }: { label: string; x: string; y: string; z: string; unit?: string }) {
+function XYZField({ label, x, y, z }: { label: string; x: string; y: string; z: string }) {
   const [vals, setVals] = useState({ x, y, z })
+  const handleChange = (axis: 'x' | 'y' | 'z', v: string) => setVals({ ...vals, [axis]: v })
   return (
-    <div className="xyz-field">
+    <div className="xyz-row">
       <span className="prop-label">{label}</span>
       <div className="xyz-inputs">
-        {(['x', 'y', 'z'] as const).map((axis) => (
-          <div key={axis} className="xyz-input-wrap">
-            <span className={`xyz-axis axis-${axis}`}>{axis.toUpperCase()}</span>
+        {(['x', 'y', 'z'] as const).map((a) => (
+          <div key={a} className="xyz-cell">
+            <span className={`xyz-tag ${a}`}>{a.toUpperCase()}</span>
             <input
-              className="prop-input xyz-input"
-              value={vals[axis]}
-              onChange={(e) => setVals({ ...vals, [axis]: e.target.value })}
+              className="prop-input xyz-val"
+              value={vals[a]}
+              onChange={(e) => handleChange(a, e.target.value)}
             />
           </div>
         ))}
-        {unit && <span className="prop-unit">{unit}</span>}
       </div>
     </div>
   )
 }
 
 export default function RightSidebar() {
-  const [activeTab, setActiveTab] = useState<'transform' | 'material' | 'physics' | 'meta'>('transform')
+  const [activeTab, setActiveTab] = useState<'xform' | 'material' | 'physics' | 'meta'>('xform')
+  const [target] = useState('World')
 
   return (
     <div className="right-sidebar">
-      <div className="inspector-header">
-        <span className="inspector-title">Inspector</span>
-        <span className="inspector-target">robot_1</span>
+      <div className="inspector-head">
+        <span className="inspector-label">INSPECTOR</span>
+        <span className="inspector-target">{target}</span>
       </div>
 
       <div className="inspector-tabs">
-        {(['transform', 'material', 'physics', 'meta'] as const).map((tab) => (
+        {['xform', 'material', 'physics', 'meta'].map((tab) => (
           <button
             key={tab}
             className={`inspector-tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-            title={tab.charAt(0).toUpperCase() + tab.slice(1)}
+            onClick={() => setActiveTab(tab as typeof activeTab)}
           >
-            {tab === 'transform' ? 'Xform' : tab === 'material' ? 'Mtrl' : tab === 'physics' ? 'Phys' : 'Meta'}
+            {tab === 'xform' ? 'Xform' : tab === 'material' ? 'Mtrl' : tab === 'physics' ? 'Phys' : 'Meta'}
           </button>
         ))}
       </div>
 
-      <div className="inspector-content">
-        {activeTab === 'transform' && (
+      <div className="inspector-scroll">
+        {activeTab === 'xform' && (
           <>
             <PropSection title="Transform">
-              <XYZField label="Position" x="0.000" y="0.000" z="0.000" unit="m" />
-              <XYZField label="Rotation" x="0.000" y="0.000" z="0.000" unit="°" />
+              <XYZField label="Pos" x="0.000" y="0.000" z="0.000" />
+              <XYZField label="Ori" x="0.000" y="0.000" z="0.000" />
               <XYZField label="Scale" x="1.000" y="1.000" z="1.000" />
             </PropSection>
-
-            <PropSection title="Geometry">
-              <PropField label="Type" value="Mesh" />
-              <PropField label="URI" value="model://robot_1/mesh.dae" />
-              <PropField label="Scale" value="1.0" unit="×" />
-            </PropSection>
-
-            <PropSection title="Pose (SDF)">
-              <div className="code-block">
-                <span className="code-line"><span className="xml-tag">&lt;pose&gt;</span>0 0 0 0 0 0<span className="xml-tag">&lt;/pose&gt;</span></span>
-              </div>
+            <PropSection title="Geometry" defaultOpen={false}>
+              <PropField label="Type" value="Plane" />
+              <PropField label="Size" value="100 × 100" unit="m" />
             </PropSection>
           </>
         )}
@@ -111,73 +90,25 @@ export default function RightSidebar() {
         {activeTab === 'material' && (
           <>
             <PropSection title="Surface">
-              <PropField label="Script" value="Gazebo/Grey" />
-              <div className="prop-row">
-                <span className="prop-label">Ambient</span>
-                <div className="color-row">
-                  <div className="color-swatch" style={{ background: 'rgba(100,100,100,0.8)' }} />
-                  <input className="prop-input" defaultValue="0.4 0.4 0.4 1" />
-                </div>
-              </div>
-              <div className="prop-row">
-                <span className="prop-label">Diffuse</span>
-                <div className="color-row">
-                  <div className="color-swatch" style={{ background: 'rgba(200,200,200,0.8)' }} />
-                  <input className="prop-input" defaultValue="0.8 0.8 0.8 1" />
-                </div>
-              </div>
-              <div className="prop-row">
-                <span className="prop-label">Specular</span>
-                <div className="color-row">
-                  <div className="color-swatch" style={{ background: 'rgba(30,30,30,0.8)' }} />
-                  <input className="prop-input" defaultValue="0.1 0.1 0.1 1" />
-                </div>
-              </div>
-              <div className="prop-row">
-                <span className="prop-label">Emissive</span>
-                <div className="color-row">
-                  <div className="color-swatch" style={{ background: 'rgba(0,0,0,0.8)' }} />
-                  <input className="prop-input" defaultValue="0.0 0.0 0.0 1" />
-                </div>
-              </div>
-            </PropSection>
-            <PropSection title="Texture">
-              <PropField label="Albedo" value="—" />
-              <PropField label="Normal" value="—" />
-              <PropField label="Roughness" value="0.5" />
-              <PropField label="Metallic" value="0.0" />
+              <PropField label="Ambient" value="0.4 0.4 0.4" />
+              <PropField label="Diffuse" value="0.8 0.8 0.8" />
+              <PropField label="Specular" value="0.1 0.1 0.1" />
             </PropSection>
           </>
         )}
 
         {activeTab === 'physics' && (
           <>
-            <PropSection title="Dynamics">
+            <PropSection title="Physics">
               <div className="prop-row">
                 <span className="prop-label">Static</span>
-                <label className="prop-checkbox">
-                  <input type="checkbox" defaultChecked={false} />
-                  <span className="checkbox-label">Off</span>
-                </label>
+                <input type="checkbox" defaultChecked />
               </div>
-              <PropField label="Mass" value="1.000" unit="kg" />
-              <PropField label="Mu₁" value="0.800" />
-              <PropField label="Mu₂" value="0.800" />
-            </PropSection>
-
-            <PropSection title="Inertia">
-              <PropField label="Ixx" value="0.0014" unit="kg·m²" />
-              <PropField label="Ixy" value="0.0000" unit="kg·m²" />
-              <PropField label="Ixz" value="0.0000" unit="kg·m²" />
-              <PropField label="Iyy" value="0.0014" unit="kg·m²" />
-              <PropField label="Iyz" value="0.0000" unit="kg·m²" />
-              <PropField label="Izz" value="0.0025" unit="kg·m²" />
-            </PropSection>
-
-            <PropSection title="Collision">
-              <PropField label="Shape" value="Box" />
-              <XYZField label="Size" x="0.500" y="0.400" z="0.300" unit="m" />
-              <PropField label="Friction" value="0.8" />
+              <div className="prop-row">
+                <span className="prop-label">Gravity</span>
+                <input type="checkbox" defaultChecked />
+              </div>
+              <PropField label="Engine" value="ODE" />
             </PropSection>
           </>
         )}
@@ -185,23 +116,8 @@ export default function RightSidebar() {
         {activeTab === 'meta' && (
           <>
             <PropSection title="Identity">
-              <PropField label="Name" value="robot_1" />
-              <PropField label="Model" value="TurtleBot3 Burger" />
-              <PropField label="Version" value="1.0.0" />
-              <PropField label="Author" value="Robotics Lab" />
-            </PropSection>
-            <PropSection title="SDF">
-              <PropField label="SDF Ver." value="1.10" />
-              <PropField label="File" value="robot_1.sdf" />
-              <PropField label="Plugin" value="libgazebo_ros.so" />
-            </PropSection>
-            <PropSection title="Tags">
-              <div className="tag-list">
-                <span className="tag">mobile</span>
-                <span className="tag">sensor</span>
-                <span className="tag">lidar</span>
-                <span className="tag">diff-drive</span>
-              </div>
+              <PropField label="Name" value="world" />
+              <PropField label="SDF" value="1.10" />
             </PropSection>
           </>
         )}

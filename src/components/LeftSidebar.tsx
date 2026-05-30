@@ -5,69 +5,46 @@ interface SceneNode {
   id: string
   name: string
   type: string
-  icon: string
+  glyph: string
   children?: SceneNode[]
   expanded?: boolean
 }
 
+// Minimal scene tree - just World, Ground Plane, and Sun
 const SCENE_TREE: SceneNode[] = [
   {
     id: 'world',
-    name: 'world',
+    name: 'World',
     type: 'world',
-    icon: '🌐',
+    glyph: '◎',
     expanded: true,
     children: [
       {
         id: 'ground_plane',
-        name: 'ground_plane',
+        name: 'Ground Plane',
         type: 'model',
-        icon: '▦',
-        expanded: false,
+        glyph: '▬',
         children: [
-          { id: 'ground_link', name: 'link', type: 'link', icon: '◈' },
+          { id: 'ground_visual', name: 'Visual', type: 'visual', glyph: '◆' },
+          { id: 'ground_collision', name: 'Collision', type: 'collision', glyph: '⬡' },
         ],
       },
       {
         id: 'sun',
-        name: 'sun',
+        name: 'Sun',
         type: 'light',
-        icon: '☀',
+        glyph: '☀',
         children: [],
-      },
-      {
-        id: 'robot_1',
-        name: 'robot_1',
-        type: 'model',
-        icon: '◈',
-        expanded: false,
-        children: [
-          { id: 'base_link', name: 'base_link', type: 'link', icon: '⬡' },
-          { id: 'left_wheel', name: 'left_wheel', type: 'link', icon: '⬡' },
-          { id: 'right_wheel', name: 'right_wheel', type: 'link', icon: '⬡' },
-          { id: 'lidar', name: 'lidar_sensor', type: 'sensor', icon: '◎' },
-          { id: 'camera', name: 'camera_front', type: 'sensor', icon: '◎' },
-        ],
-      },
-      {
-        id: 'box_1',
-        name: 'box_0',
-        type: 'model',
-        icon: '▦',
-        children: [
-          { id: 'box_link', name: 'link', type: 'link', icon: '⬡' },
-        ],
       },
     ],
   },
 ]
 
 const ASSETS = [
-  { category: 'Robots', items: ['TurtleBot3', 'Pioneer 3-DX', 'UR5 Arm', 'Fetch Mobile', 'Atlas Humanoid'] },
-  { category: 'Sensors', items: ['RPLidar A2', 'Velodyne VLP-16', 'RealSense D435', 'IMU 6-DOF', 'GPS Module'] },
-  { category: 'Environments', items: ['Empty World', 'Warehouse', 'Office', 'Outdoor Field', 'Maze Grid'] },
-  { category: 'Props', items: ['Cardboard Box', 'Shelf Unit', 'Traffic Cone', 'Pallet', 'Barrel'] },
   { category: 'Lights', items: ['Point Light', 'Spot Light', 'Directional', 'Area Light'] },
+  { category: 'Sensors', items: ['Camera', 'Ray (Lidar)', 'IMU', 'Contact', 'GPS'] },
+  { category: 'Shapes', items: ['Box', 'Sphere', 'Cylinder', 'Capsule'] },
+  { category: 'Model', items: ['From File...', 'From URDF...'] },
 ]
 
 function TreeNode({ node, depth }: { node: SceneNode; depth: number }) {
@@ -79,22 +56,20 @@ function TreeNode({ node, depth }: { node: SceneNode; depth: number }) {
     <div className="tree-node">
       <div
         className={`tree-item ${selected ? 'selected' : ''}`}
-        style={{ paddingLeft: `${8 + depth * 14}px` }}
+        style={{ paddingLeft: `${6 + depth * 14}px` }}
         onClick={() => setSelected(!selected)}
       >
         {hasChildren ? (
           <span
-            className={`tree-caret ${expanded ? 'expanded' : ''}`}
+            className={`tree-expando ${expanded || 'collapsed'}`}
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
-          >
-            ▶
-          </span>
+          />
         ) : (
-          <span className="tree-caret-placeholder" />
+          <span className="tree-expando-placeholder" />
         )}
-        <span className="tree-icon">{node.icon}</span>
+        <span className="tree-glyph">{node.glyph}</span>
         <span className="tree-name">{node.name}</span>
-        <span className="tree-type">{node.type}</span>
+        {node.type !== 'world' && <span className="tree-badge">{node.type}</span>}
       </div>
       {expanded && hasChildren && (
         <div className="tree-children">
@@ -118,7 +93,7 @@ export default function LeftSidebar() {
           className={`sidebar-tab ${activeTab === 'scene' ? 'active' : ''}`}
           onClick={() => setActiveTab('scene')}
         >
-          Scene Tree
+          Scene
         </button>
         <button
           className={`sidebar-tab ${activeTab === 'assets' ? 'active' : ''}`}
@@ -131,15 +106,24 @@ export default function LeftSidebar() {
       {activeTab === 'scene' && (
         <div className="sidebar-content">
           <div className="sidebar-toolbar">
-            <button className="sidebar-action" title="Add Model">+</button>
-            <button className="sidebar-action" title="Delete">✕</button>
-            <button className="sidebar-action" title="Duplicate">⧉</button>
-            <input className="sidebar-search" placeholder="Filter..." type="text" />
+            <button className="sidebar-tool" title="Add entity to world">
+              <span className="tool-icon">+</span>
+            </button>
+            <button className="sidebar-tool" title="Delete selected">
+              <span className="tool-icon">×</span>
+            </button>
+            <div className="sidebar-spacer" />
+            <input className="sidebar-filter" placeholder="Filter..." type="text" />
           </div>
           <div className="tree-view">
             {SCENE_TREE.map((node) => (
               <TreeNode key={node.id} node={node} depth={0} />
             ))}
+            {/* Empty state helper */}
+            <div className="tree-helper">
+              <span className="helper-line">Drag assets here</span>
+              <span className="helper-line subtle">or use Insert menu</span>
+            </div>
           </div>
         </div>
       )}
@@ -148,7 +132,7 @@ export default function LeftSidebar() {
         <div className="sidebar-content">
           <div className="sidebar-toolbar">
             <input
-              className="sidebar-search full"
+              className="sidebar-filter full"
               placeholder="Search assets..."
               type="text"
               value={assetSearch}
@@ -156,17 +140,17 @@ export default function LeftSidebar() {
             />
           </div>
           <div className="assets-list">
-            {ASSETS.map((cat) => {
-              const filtered = cat.items.filter(item =>
+            {ASSETS.map((category) => {
+              const filtered = category.items.filter((item) =>
                 item.toLowerCase().includes(assetSearch.toLowerCase())
               )
               if (filtered.length === 0) return null
               return (
-                <div key={cat.category} className="asset-category">
-                  <div className="asset-category-header">{cat.category}</div>
+                <div key={category.category} className="asset-category">
+                  <div className="asset-cat-header">{category.category}</div>
                   {filtered.map((item) => (
-                    <div key={item} className="asset-item">
-                      <span className="asset-icon">◈</span>
+                    <div key={item} className="asset-row">
+                      <span className="asset-drag">⋮⋮</span>
                       <span>{item}</span>
                     </div>
                   ))}

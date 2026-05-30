@@ -1,247 +1,204 @@
-import { useState } from 'react'
 import './Viewport.css'
 
-const VIEW_OPTIONS = ['Perspective', 'Top', 'Front', 'Right', 'Bottom', 'Back', 'Left']
-const RENDER_MODES = ['Solid', 'Wireframe', 'Material', 'Unlit', 'Depth']
-
 export default function Viewport() {
-  const [view, setView] = useState('Perspective')
-  const [renderMode, setRenderMode] = useState('Solid')
-  const [showGrid, setShowGrid] = useState(true)
-  const [showGizmo, setShowGizmo] = useState(true)
-
   return (
     <div className="viewport">
-      {/* Sky / horizon background */}
-      <div className="viewport-sky" />
+      {/* Sky dome with atmospheric gradient */}
+      <div className="viewport-sky-dome">
+        {/* Sun */}
+        <div className="viewport-sun" />
+        {/* Atmospheric haze near horizon */}
+        <div className="viewport-atmosphere" />
+      </div>
 
-      {/* SVG Grid + scene elements */}
+      {/* Main SVG scene layer */}
       <svg className="viewport-scene" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
         <defs>
-          {/* Radial fade for grid */}
-          <radialGradient id="gridFade" cx="50%" cy="65%" r="52%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.12" />
-            <stop offset="70%" stopColor="#ffffff" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          {/* Grid fade - disappears into fog/horizon */}
+          <radialGradient id="gridFadePerspective" cx="50%" cy="100%" r="80%" fx="50%" fy="100%">
+            <stop offset="0%" stopColor="#4a5a6a" stopOpacity="0.25" />
+            <stop offset="40%" stopColor="#3a4a5a" stopOpacity="0.18" />
+            <stop offset="70%" stopColor="#2a3a4a" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#1a2a3a" stopOpacity="0" />
           </radialGradient>
-          <linearGradient id="horizonFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1e2a3a" stopOpacity="1" />
-            <stop offset="40%" stopColor="#1a1a1a" stopOpacity="1" />
+
+          {/* Shadow gradient for ground plane */}
+          <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#000000" stopOpacity="0.35" />
+            <stop offset="40%" stopColor="#000000" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </radialGradient>
+
+          {/* Fog gradient overlay */}
+          <linearGradient id="fogOverlay" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1a2530" stopOpacity="0" />
+            <stop offset="60%" stopColor="#1a2530" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#1a2530" stopOpacity="0.7" />
           </linearGradient>
-          <clipPath id="viewportClip">
-            <rect x="0" y="0" width="1000" height="700" />
-          </clipPath>
+
+          {/* Ambient occlusion under objects */}
+          <radialGradient id="aoGradient" cx="50%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#000000" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </radialGradient>
         </defs>
 
-        {/* Background gradient */}
-        <rect x="0" y="0" width="1000" height="700" fill="url(#horizonFade)" />
+        {/* ====== INFINITE GROUND GRID ====== */}
+        <g className="ground-grid">
+          {/* Perspective grid lines extending to horizon */}
+          {/* Vertical lines (going away from camera into distance) */}
+          {Array.from({ length: 51 }, (_, i) => {
+            const t = (i - 25) / 25 // -1 to 1
+            const xFar = 500 + t * 50 // Vanishing point spread
+            const xBot = 500 + t * 3500 // Wide spread at bottom
+            const yHorizon = 320
+            const yBot = 720
 
-        {/* Horizon line */}
-        <line x1="0" y1="420" x2="1000" y2="420" stroke="#2a3a4a" strokeWidth="1" opacity="0.8" />
+            // Major lines every 5, minor lines in between
+            const isMajor = i % 5 === 25 % 5 // Center line and every 5th
+            return (
+              <line
+                key={`vgrid-${i}`}
+                x1={xFar}
+                y1={yHorizon}
+                x2={xBot}
+                y2={yBot}
+                stroke={isMajor ? "#4a5a6a" : "#2a3a4a"}
+                strokeWidth={isMajor ? 0.8 : 0.4}
+                opacity={isMajor ? 0.6 : 0.35}
+              />
+            )
+          })}
 
-        {/* Ground grid - perspective */}
-        {showGrid && (
-          <g clipPath="url(#viewportClip)">
-            {/* Perspective grid lines going to horizon */}
-            {Array.from({ length: 41 }, (_, i) => {
-              const t = i / 40
-              const x = 500 + (t - 0.5) * 1400
-              const yBot = 700
-              const yHorizon = 420
-              return (
-                <line
-                  key={`vline-${i}`}
-                  x1={500}
-                  y1={yHorizon}
-                  x2={x}
-                  y2={yBot}
-                  stroke="#3a3a3a"
-                  strokeWidth={i === 20 ? 1.5 : 0.6}
-                  opacity={i === 20 ? 0.9 : 0.5}
-                />
-              )
-            })}
-            {/* Horizontal grid lines */}
-            {Array.from({ length: 14 }, (_, i) => {
-              const t = Math.pow(i / 13, 2)
-              const y = 420 + t * 280
-              const spread = 600 + t * 800
-              return (
-                <line
-                  key={`hline-${i}`}
-                  x1={500 - spread / 2}
-                  y1={y}
-                  x2={500 + spread / 2}
-                  y2={y}
-                  stroke="#3a3a3a"
-                  strokeWidth={0.6}
-                  opacity={0.5 - t * 0.1}
-                />
-              )
-            })}
-            {/* Axis highlight: X (red) */}
-            <line x1="0" y1="420" x2="500" y2="700" stroke="#8b1a1a" strokeWidth="1.5" opacity="0.7" />
-            <line x1="1000" y1="420" x2="500" y2="700" stroke="#8b1a1a" strokeWidth="1.5" opacity="0.4" />
-            {/* Axis highlight: Y (green) */}
-            <line x1="500" y1="420" x2="500" y2="700" stroke="#1a5a1a" strokeWidth="1.5" opacity="0.9" />
-          </g>
-        )}
+          {/* Horizontal grid lines (parallel to camera, stacked into distance) */}
+          {Array.from({ length: 25 }, (_, i) => {
+            const t = Math.pow(i / 24, 2.5) // Non-linear spacing (dense near camera, sparse far)
+            const y = 320 + t * 380
+            const spread = 120 + t * 3900 // Narrow at horizon, wide at bottom
 
-        {/* Ground plane subtle glow */}
-        <ellipse cx="500" cy="650" rx="380" ry="60" fill="#0e639c" opacity="0.04" />
+            return (
+              <line
+                key={`hgrid-${i}`}
+                x1={500 - spread / 2}
+                y1={y}
+                x2={500 + spread / 2}
+                y2={y}
+                stroke="#3a4a5a"
+                strokeWidth={0.5}
+                opacity={0.5 - t * 0.35}
+              />
+            )
+          })}
 
-        {/* Robot representation - wireframe box */}
-        <g opacity="0.85">
-          {/* Robot body */}
-          <polygon
-            points="440,560 560,560 580,500 420,500"
-            fill="none"
-            stroke="#4fc1ff"
-            strokeWidth="1.2"
-          />
-          <polygon
-            points="420,500 440,560 440,520 420,460"
-            fill="none"
-            stroke="#4fc1ff"
-            strokeWidth="1.2"
-          />
-          <polygon
-            points="580,500 560,560 560,520 580,460"
-            fill="none"
-            stroke="#4fc1ff"
-            strokeWidth="1.2"
-          />
-          <polygon
-            points="420,460 580,460 560,520 440,520"
-            fill="none"
-            stroke="#4fc1ff"
-            strokeWidth="1"
-          />
-          {/* Wheels */}
-          <ellipse cx="445" cy="560" rx="20" ry="8" fill="none" stroke="#4fc1ff" strokeWidth="1" />
-          <ellipse cx="555" cy="560" rx="20" ry="8" fill="none" stroke="#4fc1ff" strokeWidth="1" />
-          {/* Sensor head */}
-          <rect x="474" y="460" width="52" height="18" fill="none" stroke="#4ec9b0" strokeWidth="1" />
-          <line x1="500" y1="450" x2="500" y2="420" stroke="#4ec9b0" strokeWidth="1" strokeDasharray="3,3" />
-          {/* Sensor arc/scan */}
-          <path d="M440,430 Q500,380 560,430" fill="none" stroke="#4ec9b0" strokeWidth="0.8" opacity="0.6" strokeDasharray="4,4" />
+          {/* Ground plane subtle luminance difference */}
+          <rect x="0" y="320" width="1000" height="380" fill="url(#gridFadePerspective)" />
         </g>
 
-        {/* Bounding box dashed outline */}
-        <rect
-          x="415"
-          y="415"
-          width="170"
-          height="155"
-          fill="none"
-          stroke="#0e639c"
-          strokeWidth="0.8"
-          strokeDasharray="5,4"
-          opacity="0.6"
-        />
+        {/* ====== SHADOW RECEIVING GROUND ====== */}
+        {/* Main shadow plane */}
+        <ellipse cx="500" cy="700" rx="900" ry="280" fill="url(#groundShadow)" opacity="0.8" />
 
-        {/* Ground plane object */}
-        <polygon
-          points="500,420 750,500 500,580 250,500"
-          fill="none"
-          stroke="#2e5a2e"
-          strokeWidth="0.8"
-          opacity="0.5"
-        />
+        {/* ====== WORLD ENTITIES ====== */}
+        {/* Ground Plane - subtle texture representation */}
+        <g className="ground-plane-entity">
+          {/* Ground plane boundary hint */}
+          <ellipse
+            cx="500"
+            cy="630"
+            rx="180"
+            ry="45"
+            fill="none"
+            stroke="#3a5a3a"
+            strokeWidth="0.6"
+            opacity="0.25"
+            strokeDasharray="8,6"
+          />
+          {/* Ground plane center marker */}
+          <circle cx="500" cy="630" r="3" fill="#4a6a4a" opacity="0.4" />
+          <text x="500" y="668" textAnchor="middle" fill="#4a6a4a" fontSize="9" fontFamily="JetBrains Mono, monospace" opacity="0.5">
+            ground_plane
+          </text>
+        </g>
 
-        {/* Light indicator */}
-        <circle cx="200" cy="180" r="8" fill="none" stroke="#dcdcaa" strokeWidth="1" opacity="0.7" />
-        <line x1="200" y1="188" x2="200" y2="200" stroke="#dcdcaa" strokeWidth="0.8" opacity="0.5" />
-        {Array.from({ length: 8 }, (_, i) => {
-          const a = (i / 8) * Math.PI * 2
-          return (
-            <line
-              key={i}
-              x1={200 + Math.cos(a) * 10}
-              y1={180 + Math.sin(a) * 10}
-              x2={200 + Math.cos(a) * 16}
-              y2={180 + Math.sin(a) * 16}
-              stroke="#dcdcaa"
-              strokeWidth="0.8"
-              opacity="0.5"
-            />
-          )
-        })}
+        {/* ====== ATMOSPHERIC FOG ====== */}
+        <rect x="0" y="0" width="1000" height="700" fill="url(#fogOverlay)" />
 
-        {/* Grid fade overlay */}
-        <rect x="0" y="0" width="1000" height="700" fill="url(#gridFade)" />
+        {/* ====== HORIZON LINE ====== */}
+        <line x1="0" y1="318" x2="1000" y2="318" stroke="#5a6a7a" strokeWidth="1" opacity="0.4" />
       </svg>
 
-      {/* XYZ Gizmo */}
-      {showGizmo && (
-        <div className="viewport-gizmo">
-          <svg viewBox="0 0 64 64" width="64" height="64">
-            <defs>
-              <filter id="gizmoGlow">
-                <feGaussianBlur stdDeviation="1" result="blur" />
-                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-            </defs>
-            {/* X axis - red */}
-            <line x1="32" y1="32" x2="56" y2="22" stroke="#e05050" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="56" cy="22" r="5" fill="#e05050" />
-            <text x="54" y="26" fill="white" fontSize="6" textAnchor="middle" dominantBaseline="middle" fontWeight="600">X</text>
-            {/* Y axis - green */}
-            <line x1="32" y1="32" x2="32" y2="8" stroke="#50c050" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="32" cy="8" r="5" fill="#50c050" />
-            <text x="32" y="8" fill="white" fontSize="6" textAnchor="middle" dominantBaseline="middle" fontWeight="600">Y</text>
-            {/* Z axis - blue */}
-            <line x1="32" y1="32" x2="8" y2="42" stroke="#5080e0" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="8" cy="42" r="5" fill="#5080e0" />
-            <text x="8" y="42" fill="white" fontSize="6" textAnchor="middle" dominantBaseline="middle" fontWeight="600">Z</text>
-            {/* Center dot */}
-            <circle cx="32" cy="32" r="2.5" fill="#888" />
-          </svg>
-          <span className="gizmo-label">{view}</span>
+      {/* ====== XYZ GIZMO (Bottom-right corner) ====== */}
+      <div className="viewport-gizmo">
+        <svg className="gizmo-svg" viewBox="0 0 100 100" width="72" height="72">
+          <defs>
+            <linearGradient id="gizmo-x" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#aa3030" />
+              <stop offset="100%" stopColor="#ff5050" />
+            </linearGradient>
+            <linearGradient id="gizmo-y" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#30aa30" />
+              <stop offset="100%" stopColor="#50ff50" />
+            </linearGradient>
+            <linearGradient id="gizmo-z" x1="1" y1="0" x2="0" y2="0">
+              <stop offset="0%" stopColor="#3050aa" />
+              <stop offset="100%" stopColor="#5080ff" />
+            </linearGradient>
+            <filter id="gizmoGlow">
+              <feGaussianBlur stdDeviation="1.2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Z axis - Blue (toward camera/right on screen) */}
+          <line x1="48" y1="52" x2="18" y2="68" stroke="url(#gizmo-z)" strokeWidth="3" strokeLinecap="round" filter="url(#gizmoGlow)" />
+          <polygon points="18,68 12,63 22,62 24,71" fill="#5080ff" />
+          <text x="10" y="75" fill="#5080ff" fontSize="11" fontWeight="700" fontFamily="monospace">Z</text>
+
+          {/* X axis - Red (right) */}
+          <line x1="48" y1="52" x2="82" y2="52" stroke="url(#gizmo-x)" strokeWidth="3" strokeLinecap="round" filter="url(#gizmoGlow)" />
+          <polygon points="82,52 76,46 76,58 88,52" fill="#ff5050" />
+          <text x="86" y="56" fill="#ff5050" fontSize="11" fontWeight="700" fontFamily="monospace">X</text>
+
+          {/* Y axis - Green (up) */}
+          <line x1="48" y1="52" x2="48" y2="18" stroke="url(#gizmo-y)" strokeWidth="3" strokeLinecap="round" filter="url(#gizmoGlow)" />
+          <polygon points="48,18 42,26 54,26" fill="#50ff50" />
+          <text x="44" y="12" fill="#50ff50" fontSize="11" fontWeight="700" fontFamily="monospace">Y</text>
+
+          {/* Center sphere */}
+          <circle cx="48" cy="52" r="5" fill="#888" filter="url(#gizmoGlow)" />
+          <circle cx="48" cy="52" r="2.5" fill="#ccc" />
+        </svg>
+
+        {/* View mode indicator */}
+        <div className="gizmo-info">
+          <span className="gizmo-label">Perspective</span>
+          <span className="gizmo-coords">X: 0.00 Y: 0.00 Z: 5.00</span>
         </div>
-      )}
-
-      {/* Viewport controls overlay */}
-      <div className="viewport-controls">
-        <select
-          className="viewport-select"
-          value={view}
-          onChange={(e) => setView(e.target.value)}
-        >
-          {VIEW_OPTIONS.map((v) => <option key={v}>{v}</option>)}
-        </select>
-        <select
-          className="viewport-select"
-          value={renderMode}
-          onChange={(e) => setRenderMode(e.target.value)}
-        >
-          {RENDER_MODES.map((m) => <option key={m}>{m}</option>)}
-        </select>
-        <button
-          className={`viewport-toggle ${showGrid ? 'on' : ''}`}
-          onClick={() => setShowGrid(!showGrid)}
-          title="Toggle Grid"
-        >
-          Grid
-        </button>
-        <button
-          className={`viewport-toggle ${showGizmo ? 'on' : ''}`}
-          onClick={() => setShowGizmo(!showGizmo)}
-          title="Toggle Gizmo"
-        >
-          Gizmo
-        </button>
       </div>
 
-      {/* Viewport corner label */}
-      <div className="viewport-corner-label">
-        Camera: scene_camera_0 &nbsp;|&nbsp; FOV: 60° &nbsp;|&nbsp; Near: 0.01 &nbsp;|&nbsp; Far: 1000
+      {/* ====== CAMERA OVERLAY INFO ====== */}
+      <div className="viewport-camera-info">
+        <span className="camera-detail">FOV 60°</span>
+        <span className="camera-detail">Near 0.01</span>
+        <span className="camera-detail">Far 1000</span>
       </div>
 
-      {/* Crosshair */}
+      {/* ====== CENTER CROSSHAIR (subtle) ===== */}
       <div className="viewport-crosshair">
-        <div className="crosshair-h" />
-        <div className="crosshair-v" />
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <line x1="8" y1="12" x2="16" y2="12" stroke="#fff" strokeWidth="0.5" opacity="0.15" />
+          <line x1="12" y1="8" x2="12" y2="16" stroke="#fff" strokeWidth="0.5" opacity="0.15" />
+        </svg>
+      </div>
+
+      {/* ====== RENDER STATS OVERLAY ===== */}
+      <div className="viewport-stats">
+        <span>Render: OpenGL</span>
+        <span>Shadows: ON</span>
+        <span>AA: 4x</span>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 .left-sidebar {
   width: var(--left-sidebar-width);
-  min-width: 180px;
+  min-width: 170px;
+  max-width: 300px;
   background: var(--panel);
   border-right: 1px solid var(--border);
   display: flex;
@@ -22,11 +23,9 @@
   font-size: 11px;
   color: var(--text-dim);
   border-bottom: 2px solid transparent;
-  transition: color 0.1s, border-color 0.1s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0 4px;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  letter-spacing: 0.04em;
+  font-weight: 500;
 }
 
 .sidebar-tab:hover {
@@ -34,7 +33,7 @@
 }
 
 .sidebar-tab.active {
-  color: var(--text);
+  color: #fff;
   border-bottom-color: var(--accent);
   background: var(--panel);
 }
@@ -50,63 +49,77 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 4px 6px;
+  padding: 5px 6px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  background: #2a2a2a;
+  background: #282828;
 }
 
-.sidebar-action {
-  width: 20px;
-  height: 20px;
+.sidebar-tool {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: 3px;
   color: var(--text-dim);
-  font-size: 13px;
   transition: background 0.1s, color 0.1s;
 }
 
-.sidebar-action:hover {
+.sidebar-tool:hover {
   background: #3a3a3a;
   color: var(--text);
 }
 
-.sidebar-search {
+.tool-icon {
+  font-size: 14px;
+}
+
+.sidebar-spacer {
   flex: 1;
-  height: 20px;
-  padding: 0 6px;
+}
+
+.sidebar-filter {
+  height: 22px;
+  padding: 0 7px;
   font-size: 11px;
-  border-radius: 2px;
+  border-radius: 3px;
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
+  min-width: 0;
 }
 
-.sidebar-search.full {
-  width: 100%;
+.sidebar-filter.full {
+  flex: 1;
 }
 
-.sidebar-search::placeholder {
+.sidebar-filter::placeholder {
   color: var(--text-dim);
+  opacity: 0.7;
 }
 
-/* Scene Tree */
+/* ====== SCENE TREE ====== */
 .tree-view {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 6px 0;
+  background: var(--panel);
+}
+
+.tree-node {
+  user-select: none;
 }
 
 .tree-item {
   display: flex;
   align-items: center;
-  height: 20px;
-  gap: 4px;
-  cursor: pointer;
-  border-radius: 2px;
-  margin: 0 2px;
+  height: 22px;
+  gap: 3px;
+  cursor: default;
+  border-radius: 3px;
+  margin: 0 3px;
+  padding-right: 6px;
   transition: background 0.08s;
 }
 
@@ -118,71 +131,113 @@
   background: #094771;
 }
 
-.tree-caret {
-  width: 12px;
-  height: 12px;
+.tree-expando {
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
-  color: var(--text-dim);
+  flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.1s;
-  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 8px;
+  transition: transform 0.15s, color 0.1s;
 }
 
-.tree-caret.expanded {
-  transform: rotate(90deg);
+.tree-expando::after {
+  content: '▶';
 }
 
-.tree-caret-placeholder {
-  width: 12px;
-  flex-shrink: 0;
+.tree-expando.collapsed::after {
+  content: '▶';
 }
 
-.tree-icon {
-  font-size: 11px;
+.tree-expando:hover {
+  color: var(--text);
+}
+
+.tree-expando-placeholder {
   width: 14px;
+  flex-shrink: 0;
+}
+
+.tree-glyph {
+  font-size: 11px;
+  width: 16px;
   text-align: center;
   flex-shrink: 0;
   color: var(--text-dim);
+  opacity: 0.85;
+}
+
+.tree-item.selected .tree-glyph {
+  color: var(--accent-light);
 }
 
 .tree-name {
   font-size: 11px;
-  color: var(--text);
+  color: #e0e0e0;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: 'JetBrains Mono', monospace;
 }
 
-.tree-type {
+.tree-item.selected .tree-name {
+  color: #fff;
+}
+
+.tree-badge {
   font-size: 9px;
   color: var(--text-dim);
-  padding-right: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
 }
 
-/* Assets */
+.tree-helper {
+  padding: 12px 10px;
+  text-align: center;
+  opacity: 0.4;
+  margin-top: 16px;
+}
+
+.helper-line {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.helper-line.subtle {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+/* ====== ASSETS ====== */
 .assets-list {
   flex: 1;
   overflow-y: auto;
   padding: 4px 0;
 }
 
-.asset-category-header {
+.asset-category {
+  margin-bottom: 2px;
+}
+
+.asset-cat-header {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 6px 10px 3px;
+  letter-spacing: 0.1em;
+  padding: 5px 10px 2px;
 }
 
-.asset-item {
+.asset-row {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -190,15 +245,17 @@
   padding: 0 10px;
   font-size: 11px;
   color: var(--text);
-  cursor: pointer;
+  cursor: grab;
   transition: background 0.08s;
 }
 
-.asset-item:hover {
+.asset-row:hover {
   background: #2f2f2f;
 }
 
-.asset-icon {
+.asset-drag {
   color: var(--text-dim);
   font-size: 10px;
+  letter-spacing: -1px;
+  opacity: 0.5;
 }

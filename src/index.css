@@ -5,28 +5,31 @@
 }
 
 :root {
-  --bg: #1e1e1e;
-  --panel: #252526;
-  --panel-alt: #2d2d2d;
-  --border: #3e3e42;
-  --border-light: #4a4a4f;
-  --text: #cccccc;
-  --text-dim: #858585;
-  --text-bright: #e8e8e8;
-  --accent: #0e639c;
-  --accent-hover: #1177bb;
-  --accent-light: #4fc1ff;
+  /* Core colors - industrial dark */
+  --bg: #181818;
+  --panel: #1e1e1e;
+  --panel-alt: #252525;
+  --border: #333333;
+  --border-light: #444444;
+  --text: #d4d4d4;
+  --text-dim: #707070;
+  --text-bright: #f0f0f0;
+  --accent: #0078d4;
+  --accent-hover: #1e90ff;
+  --accent-light: #60cdff;
+
+  /* Semantic colors */
   --success: #4ec9b0;
   --warning: #dcdcaa;
   --error: #f44747;
-  --tab-active: #1e1e1e;
-  --tab-inactive: #2d2d2d;
+
+  /* Layout metrics - compact workstation feel */
   --toolbar-height: 36px;
   --menubar-height: 26px;
   --statusbar-height: 22px;
-  --bottomdock-height: 160px;
-  --left-sidebar-width: 15%;
-  --right-sidebar-width: 10%;
+  --bottomdock-height: 140px;
+  --left-sidebar-width: 180px;
+  --right-sidebar-width: 220px;
 }
 
 html, body, #root {
@@ -35,10 +38,11 @@ html, body, #root {
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.35;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button {
@@ -56,15 +60,17 @@ button:focus-visible {
 }
 
 input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 12px;
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--border);
 }
 
-input:focus, select:focus, textarea:focus {
-  outline: 1px solid var(--accent);
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
   border-color: var(--accent);
 }
 
@@ -74,14 +80,19 @@ input:focus, select:focus, textarea:focus {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--panel);
+  background: #181818;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #424242;
-  border-radius: 2px;
+  background: #3a3a3a;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #525252;
+  background: #505050;
+}
+
+/* Thin scrollbar variant for sidebars */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 5px;
 }
