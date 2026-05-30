@@ -1,0 +1,145 @@
+.viewport {
+  flex: 1;
+  position: relative;
+  background: #111416;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.viewport-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      #0d1520 0%,
+      #111c2e 30%,
+      #141a22 55%,
+      #131313 70%,
+      #111111 100%
+    );
+  pointer-events: none;
+}
+
+.viewport-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Gizmo */
+.viewport-gizmo {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.gizmo-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Viewport controls */
+.viewport-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: all;
+}
+
+.viewport-select {
+  height: 22px;
+  padding: 0 6px;
+  font-size: 11px;
+  background: rgba(25, 25, 25, 0.85);
+  border: 1px solid rgba(62, 62, 66, 0.8);
+  border-radius: 2px;
+  color: var(--text);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.1s;
+}
+
+.viewport-select:hover {
+  border-color: var(--border-light);
+}
+
+.viewport-toggle {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+  background: rgba(25, 25, 25, 0.85);
+  border: 1px solid rgba(62, 62, 66, 0.8);
+  border-radius: 2px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.04em;
+}
+
+.viewport-toggle:hover {
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.viewport-toggle.on {
+  color: var(--accent-light);
+  border-color: rgba(14, 99, 156, 0.6);
+}
+
+/* Corner label */
+.viewport-corner-label {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(133, 133, 133, 0.6);
+  pointer-events: none;
+  letter-spacing: 0.04em;
+}
+
+/* Crosshair */
+.viewport-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+.crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #666;
+  transform: translateY(-50%);
+}
+
+.crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #666;
+  transform: translateX(-50%);
+}

@@ -1,0 +1,140 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  height: var(--toolbar-height);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  padding: 0 4px;
+  gap: 2px;
+  user-select: none;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding-right: 6px;
+  margin-right: 2px;
+  border-right: 1px solid var(--border);
+}
+
+.toolbar-group:last-child {
+  border-right: none;
+  padding-right: 0;
+  margin-right: 0;
+}
+
+.toolbar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 30px;
+  border-radius: 2px;
+  color: var(--text-dim);
+  transition: background 0.1s, color 0.1s;
+  gap: 1px;
+}
+
+.toolbar-btn:hover {
+  background: #3a3a3a;
+  color: var(--text);
+}
+
+.toolbar-btn.active {
+  background: #094771;
+  color: var(--accent-light);
+}
+
+.toolbar-btn.sim-active {
+  background: #1a4a1a;
+  color: #4ec9b0;
+}
+
+.toolbar-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.toolbar-label {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-right {
+  border-right: none !important;
+  gap: 8px;
+  padding-right: 6px;
+}
+
+.toolbar-sim-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  height: 22px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.sim-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+
+.sim-indicator.playing {
+  background: #4ec9b0;
+  box-shadow: 0 0 4px #4ec9b0;
+}
+
+.sim-indicator.paused {
+  background: var(--warning);
+}
+
+.sim-label {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.toolbar-snap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.toolbar-snap label {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.toolbar-snap select {
+  height: 20px;
+  padding: 0 4px;
+  font-size: 11px;
+  border-radius: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
