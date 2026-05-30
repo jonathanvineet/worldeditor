@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, ReactNode } from 'react'
+import { useState, createContext, useContext, ReactNode, useEffect, useCallback } from 'react'
 import './Toolbar.css'
 
 interface ToolGroup {
@@ -21,6 +21,8 @@ interface ToolbarContextType {
   setTransformMode: (mode: TransformMode) => void
   simState: SimState
   setSimState: (state: SimState) => void
+  focusSelected: () => void
+  onFocusSelected: (callback: () => void) => void
 }
 
 const ToolbarContext = createContext<ToolbarContextType>({
@@ -28,6 +30,8 @@ const ToolbarContext = createContext<ToolbarContextType>({
   setTransformMode: () => {},
   simState: 'stopped',
   setSimState: () => {},
+  focusSelected: () => {},
+  onFocusSelected: () => {},
 })
 
 export function useToolbar() {
@@ -156,9 +160,51 @@ const ICONS: Record<string, IconElement> = {
 export function ToolbarProvider({ children }: { children: ReactNode }) {
   const [transformMode, setTransformMode] = useState<TransformMode>('translate')
   const [simState, setSimState] = useState<SimState>('stopped')
+  const [focusCallback, setFocusCallback] = useState<(() => void) | null>(null)
+
+  const focusSelected = useCallback(() => {
+    if (focusCallback) focusCallback()
+  }, [focusCallback])
+
+  const onFocusSelected = useCallback((callback: () => void) => {
+    setFocusCallback(() => callback)
+  }, [])
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+      switch (e.key.toLowerCase()) {
+        case 'w':
+          setTransformMode('translate')
+          break
+        case 'e':
+          setTransformMode('rotate')
+          break
+        case 'r':
+          setTransformMode('scale')
+          break
+        case 'f':
+          focusSelected()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [focusSelected])
 
   return (
-    <ToolbarContext.Provider value={{ transformMode, setTransformMode, simState, setSimState }}>
+    <ToolbarContext.Provider value={{
+      transformMode,
+      setTransformMode,
+      simState,
+      setSimState,
+      focusSelected,
+      onFocusSelected
+    }}>
       {children}
     </ToolbarContext.Provider>
   )

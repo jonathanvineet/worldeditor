@@ -4,6 +4,7 @@
   background: #0a1525;
   overflow: hidden;
   min-height: 0;
+  outline: none;
 }
 
 .viewport3d canvas {
@@ -80,4 +81,16 @@
   margin-top: 2px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.shortcuts-hint {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: rgba(100, 120, 150, 0.4);
+  letter-spacing: 0.02em;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 3px 10px;
+  border-radius: 2px;
 }

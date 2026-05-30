@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useApp } from '../App'
 import './LeftSidebar.css'
 
 interface SceneNode {
@@ -91,7 +92,7 @@ function TreeNode({ node, depth, selectedId, onSelect }: {
 export default function LeftSidebar() {
   const [activeTab, setActiveTab] = useState<'scene' | 'assets'>('scene')
   const [assetSearch, setAssetSearch] = useState('')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const { selectedId, setSelectedId } = useApp()
 
   return (
     <div className="left-sidebar">

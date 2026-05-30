@@ -110,29 +110,59 @@ function EntityMesh({ entity }: { entity: Entity }) {
     document.body.style.cursor = hovered ? 'pointer' : 'default'
   }, [hovered])
 
-  const emissiveIntensity = hovered ? 0.15 : isSelected ? 0.25 : 0
+  // Highlight effect
+  const emissiveIntensity = hovered ? 0.15 : isSelected ? 0.3 : 0
+
+  // Selection outline effect
+  const outlineScale = isSelected ? 1.02 : 1
 
   return (
-    <mesh
-      ref={meshRef}
-      position={entity.position}
-      rotation={entity.type === 'ground' ? [-Math.PI / 2, 0, 0] : entity.rotation}
-      scale={entity.scale}
-      onClick={handleClick}
-      onPointerOver={handlePointerOver}
-      onPointerOut={handlePointerOut}
-      castShadow={entity.type !== 'ground' && entity.type !== 'light'}
-      receiveShadow={entity.type === 'ground'}
-    >
-      {geomProps.geometry}
-      <meshStandardMaterial
-        color={entity.color}
-        emissive={isSelected || hovered ? '#ffffff' : '#000000'}
-        emissiveIntensity={emissiveIntensity}
-        roughness={0.7}
-        metalness={0.1}
-      />
-    </mesh>
+    <group>
+      {/* Main mesh */}
+      <mesh
+        ref={meshRef}
+        position={entity.position}
+        rotation={entity.type === 'ground' ? [-Math.PI / 2, 0, 0] : entity.rotation}
+        scale={[entity.scale[0] * outlineScale, entity.scale[1] * outlineScale, entity.scale[2] * outlineScale]}
+        onClick={handleClick}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        castShadow={entity.type !== 'ground' && entity.type !== 'light'}
+        receiveShadow={entity.type === 'ground'}
+      >
+        {geomProps.geometry}
+        <meshStandardMaterial
+          color={entity.color}
+          emissive={isSelected || hovered ? '#ffffff' : '#000000'}
+          emissiveIntensity={emissiveIntensity}
+          roughness={0.7}
+          metalness={0.1}
+        />
+      </mesh>
+
+      {/* Selection outline for non-ground entities */}
+      {isSelected && entity.type !== 'ground' && (
+        <mesh
+          position={entity.position}
+          rotation={entity.rotation}
+          scale={[entity.scale[0] * 1.03, entity.scale[1] * 1.03, entity.scale[2] * 1.03]}
+        >
+          {entity.type === 'box' ? (
+            <boxGeometry args={[1, 1, 1]} />
+          ) : entity.type === 'sphere' ? (
+            <sphereGeometry args={[0.5, 32, 32]} />
+          ) : (
+            <sphereGeometry args={[0.25, 16, 16]} />
+          )}
+          <meshBasicMaterial
+            color="#00a8ff"
+            transparent
+            opacity={0.15}
+            depthTest={false}
+          />
+        </mesh>
+      )}
+    </group>
   )
 }
 
@@ -206,6 +236,37 @@ function FPSCounterOverlay() {
   return <span className="overlay-value">{fps}</span>
 }
 
+// Orbit controls wrapper
+function OrbitControlsWrapper() {
+  const controlsRef = useRef<any>(null)
+  const { onFocusSelected } = useToolbar()
+  const { selectedEntity } = useApp()
+
+  // Register focus callback
+  useEffect(() => {
+    onFocusSelected(() => {
+      if (controlsRef.current && selectedEntity) {
+        const target = new THREE.Vector3(...selectedEntity.position)
+        controlsRef.current.target.copy(target)
+        controlsRef.current.update()
+      }
+    })
+  }, [onFocusSelected, selectedEntity])
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      makeDefault
+      enableDamping
+      dampingFactor={0.08}
+      screenSpacePanning
+      minDistance={1}
+      maxDistance={80}
+      maxPolarAngle={Math.PI / 2 - 0.05}
+    />
+  )
+}
+
 // Scene content
 function SceneContent() {
   const { entities } = useApp()
@@ -238,6 +299,9 @@ function SceneContent() {
 
       {/* Transform gizmo */}
       <TransformGizmo />
+
+      {/* Orbit controls */}
+      <OrbitControlsWrapper />
     </>
   )
 }
@@ -247,22 +311,13 @@ export default function Viewport3D() {
   const { selectedId, setSelectedId, entities } = useApp()
 
   return (
-    <div className="viewport3d">
+    <div className="viewport3d" tabIndex={0}>
       <Canvas
         shadows
         camera={{ position: [8, 6, 8], fov: 50, near: 0.1, far: 1000 }}
         onPointerMissed={() => setSelectedId(null)}
       >
         <SceneContent />
-        <OrbitControls
-          makeDefault
-          enableDamping
-          dampingFactor={0.08}
-          screenSpacePanning
-          minDistance={1}
-          maxDistance={80}
-          maxPolarAngle={Math.PI / 2 - 0.05}
-        />
       </Canvas>
 
       {/* Top-right overlay */}
@@ -304,6 +359,11 @@ export default function Viewport3D() {
             ? `Selected: ${entities.find(e => e.id === selectedId)?.name || 'Unknown'}`
             : 'Click to select'}
         </span>
+      </div>
+
+      {/* Keyboard shortcuts hint */}
+      <div className="viewport-overlay shortcuts-hint">
+        <span>W: Move | E: Rotate | R: Scale | F: Focus</span>
       </div>
     </div>
   )
