@@ -1,13 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './RightSidebar.css'
 
-function PropField({ label, value, unit }: { label: string; value: string; unit?: string }) {
+interface Entity {
+  id: string
+  name: string
+  type: string
+  position: [number, number, number]
+  rotation: [number, number, number]
+  scale: [number, number, number]
+  color: string
+}
+
+interface RightSidebarProps {
+  selectedEntity: Entity | null
+}
+
+function PropField({ label, value, unit, onChange }: { label: string; value: string; unit?: string; onChange?: (v: string) => void }) {
   const [val, setVal] = useState(value)
+  useEffect(() => { setVal(value) }, [value])
   return (
     <div className="prop-row">
       <span className="prop-label">{label}</span>
       <div className="prop-value">
-        <input className="prop-input" value={val} onChange={(e) => setVal(e.target.value)} />
+        <input
+          className="prop-input"
+          value={val}
+          onChange={(e) => { setVal(e.target.value); onChange?.(e.target.value) }}
+        />
         {unit && <span className="prop-unit">{unit}</span>}
       </div>
     </div>
@@ -27,9 +46,13 @@ function PropSection({ title, children, defaultOpen = true }: { title: string; c
   )
 }
 
-function XYZField({ label, x, y, z }: { label: string; x: string; y: string; z: string }) {
+function XYZField({ label, x, y, z, onChange }: { label: string; x: string; y: string; z: string; onChange?: (axis: 'x' | 'y' | 'z', v: string) => void }) {
   const [vals, setVals] = useState({ x, y, z })
-  const handleChange = (axis: 'x' | 'y' | 'z', v: string) => setVals({ ...vals, [axis]: v })
+  useEffect(() => { setVals({ x, y, z }) }, [x, y, z])
+  const handleChange = (axis: 'x' | 'y' | 'z', v: string) => {
+    setVals({ ...vals, [axis]: v })
+    onChange?.(axis, v)
+  }
   return (
     <div className="xyz-row">
       <span className="prop-label">{label}</span>
@@ -49,15 +72,25 @@ function XYZField({ label, x, y, z }: { label: string; x: string; y: string; z: 
   )
 }
 
-export default function RightSidebar() {
+const DEFAULT_ENTITY: Entity = {
+  id: '',
+  name: 'World',
+  type: 'world',
+  position: [0, 0, 0],
+  rotation: [0, 0, 0],
+  scale: [1, 1, 1],
+  color: '#888',
+}
+
+export default function RightSidebar({ selectedEntity }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState<'xform' | 'material' | 'physics' | 'meta'>('xform')
-  const [target] = useState('World')
+  const entity = selectedEntity || DEFAULT_ENTITY
 
   return (
     <div className="right-sidebar">
       <div className="inspector-head">
         <span className="inspector-label">INSPECTOR</span>
-        <span className="inspector-target">{target}</span>
+        <span className="inspector-target">{entity.name}</span>
       </div>
 
       <div className="inspector-tabs">
@@ -76,13 +109,28 @@ export default function RightSidebar() {
         {activeTab === 'xform' && (
           <>
             <PropSection title="Transform">
-              <XYZField label="Pos" x="0.000" y="0.000" z="0.000" />
-              <XYZField label="Ori" x="0.000" y="0.000" z="0.000" />
-              <XYZField label="Scale" x="1.000" y="1.000" z="1.000" />
+              <XYZField
+                label="Pos"
+                x={entity.position[0].toFixed(3)}
+                y={entity.position[1].toFixed(3)}
+                z={entity.position[2].toFixed(3)}
+              />
+              <XYZField
+                label="Rot"
+                x={entity.rotation[0].toFixed(3)}
+                y={entity.rotation[1].toFixed(3)}
+                z={entity.rotation[2].toFixed(3)}
+              />
+              <XYZField
+                label="Scale"
+                x={entity.scale[0].toFixed(3)}
+                y={entity.scale[1].toFixed(3)}
+                z={entity.scale[2].toFixed(3)}
+              />
             </PropSection>
             <PropSection title="Geometry" defaultOpen={false}>
-              <PropField label="Type" value="Plane" />
-              <PropField label="Size" value="100 × 100" unit="m" />
+              <PropField label="Type" value={entity.type === 'box' ? 'Box' : entity.type === 'sphere' ? 'Sphere' : entity.type === 'ground' ? 'Plane' : entity.type === 'light' ? 'Light' : 'Unknown'} />
+              <PropField label="Color" value={entity.color} />
             </PropSection>
           </>
         )}
@@ -90,25 +138,22 @@ export default function RightSidebar() {
         {activeTab === 'material' && (
           <>
             <PropSection title="Surface">
-              <PropField label="Ambient" value="0.4 0.4 0.4" />
-              <PropField label="Diffuse" value="0.8 0.8 0.8" />
-              <PropField label="Specular" value="0.1 0.1 0.1" />
+              <PropField label="Color" value={entity.color} />
+              <PropField label="Roughness" value="0.70" />
+              <PropField label="Metallic" value="0.10" />
             </PropSection>
           </>
         )}
 
         {activeTab === 'physics' && (
           <>
-            <PropSection title="Physics">
+            <PropSection title="Dynamics">
               <div className="prop-row">
                 <span className="prop-label">Static</span>
-                <input type="checkbox" defaultChecked />
+                <input type="checkbox" defaultChecked={entity.type === 'ground'} />
               </div>
-              <div className="prop-row">
-                <span className="prop-label">Gravity</span>
-                <input type="checkbox" defaultChecked />
-              </div>
-              <PropField label="Engine" value="ODE" />
+              <PropField label="Mass" value={entity.type === 'ground' ? '∞' : '1.0'} unit="kg" />
+              <PropField label="Friction" value="0.80" />
             </PropSection>
           </>
         )}
@@ -116,8 +161,9 @@ export default function RightSidebar() {
         {activeTab === 'meta' && (
           <>
             <PropSection title="Identity">
-              <PropField label="Name" value="world" />
-              <PropField label="SDF" value="1.10" />
+              <PropField label="Name" value={entity.name} />
+              <PropField label="ID" value={entity.id} />
+              <PropField label="Type" value={entity.type} />
             </PropSection>
           </>
         )}

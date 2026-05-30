@@ -1,0 +1,83 @@
+.viewport3d {
+  flex: 1;
+  position: relative;
+  background: #0a1525;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.viewport3d canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Overlay panels */
+.viewport-overlay {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  user-select: none;
+  z-index: 10;
+}
+
+.viewport-overlay.top-right {
+  top: 10px;
+  right: 12px;
+  align-items: flex-end;
+}
+
+.viewport-overlay.bottom-right {
+  bottom: 10px;
+  right: 12px;
+  align-items: flex-end;
+}
+
+.viewport-overlay.bottom-left {
+  bottom: 10px;
+  left: 12px;
+}
+
+.overlay-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+
+.overlay-label {
+  color: rgba(100, 130, 160, 0.7);
+}
+
+.overlay-value {
+  color: rgba(180, 200, 220, 0.9);
+}
+
+.overlay-value.on {
+  color: #4ec9b0;
+}
+
+.overlay-message {
+  font-size: 10px;
+  color: rgba(150, 170, 190, 0.8);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.gizmo-3d {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.perspective-label {
+  font-size: 9px;
+  color: rgba(120, 150, 180, 0.6);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

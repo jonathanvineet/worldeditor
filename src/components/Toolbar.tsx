@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, createContext, useContext, ReactNode } from 'react'
 import './Toolbar.css'
 
 interface ToolGroup {
@@ -13,6 +13,26 @@ interface Tool {
 }
 
 type IconElement = React.ReactElement
+type TransformMode = 'translate' | 'rotate' | 'scale'
+type SimState = 'stopped' | 'playing' | 'paused'
+
+interface ToolbarContextType {
+  transformMode: TransformMode
+  setTransformMode: (mode: TransformMode) => void
+  simState: SimState
+  setSimState: (state: SimState) => void
+}
+
+const ToolbarContext = createContext<ToolbarContextType>({
+  transformMode: 'translate',
+  setTransformMode: () => {},
+  simState: 'stopped',
+  setSimState: () => {},
+})
+
+export function useToolbar() {
+  return useContext(ToolbarContext)
+}
 
 const TOOL_GROUPS: ToolGroup[] = [
   {
@@ -133,18 +153,53 @@ const ICONS: Record<string, IconElement> = {
   ),
 }
 
+export function ToolbarProvider({ children }: { children: ReactNode }) {
+  const [transformMode, setTransformMode] = useState<TransformMode>('translate')
+  const [simState, setSimState] = useState<SimState>('stopped')
+
+  return (
+    <ToolbarContext.Provider value={{ transformMode, setTransformMode, simState, setSimState }}>
+      {children}
+    </ToolbarContext.Provider>
+  )
+}
+
 export default function Toolbar() {
-  const [activeTool, setActiveTool] = useState('select')
-  const [simState, setSimState] = useState<'stopped' | 'playing' | 'paused'>('stopped')
+  const { transformMode, setTransformMode, simState, setSimState } = useToolbar()
+  const [activeInsertTool, setActiveInsertTool] = useState<string | null>(null)
 
   function handleTool(tool: Tool) {
     if (tool.isAction) {
       if (tool.id === 'play') setSimState('playing')
       else if (tool.id === 'pause') setSimState('paused')
       else if (tool.id === 'stop' || tool.id === 'reset') setSimState('stopped')
+    } else if (tool.id === 'select') {
+      // Select mode - no transform gizmo
+    } else if (tool.id === 'move') {
+      setTransformMode('translate')
+    } else if (tool.id === 'rotate') {
+      setTransformMode('rotate')
+    } else if (tool.id === 'scale') {
+      setTransformMode('scale')
     } else {
-      setActiveTool(tool.id)
+      setActiveInsertTool(tool.id)
     }
+  }
+
+  const getToolActive = (tool: Tool) => {
+    if (tool.isAction) {
+      return (
+        (tool.id === 'play' && simState === 'playing') ||
+        (tool.id === 'pause' && simState === 'paused') ||
+        (tool.id === 'stop' && simState === 'stopped') ||
+        (tool.id === 'reset' && simState === 'stopped')
+      )
+    }
+    if (tool.id === 'select') return transformMode === null
+    if (tool.id === 'move') return transformMode === 'translate'
+    if (tool.id === 'rotate') return transformMode === 'rotate'
+    if (tool.id === 'scale') return transformMode === 'scale'
+    return activeInsertTool === tool.id
   }
 
   return (
@@ -152,13 +207,7 @@ export default function Toolbar() {
       {TOOL_GROUPS.map((group, gi) => (
         <div key={gi} className="toolbar-group">
           {group.tools.map((tool) => {
-            const isPlayAction = tool.isAction
-            const isActive = isPlayAction
-              ? (tool.id === 'play' && simState === 'playing') ||
-                (tool.id === 'pause' && simState === 'paused') ||
-                (tool.id === 'stop' && simState === 'stopped') ||
-                (tool.id === 'reset' && simState === 'stopped')
-              : activeTool === tool.id
+            const isActive = getToolActive(tool)
 
             return (
               <button
