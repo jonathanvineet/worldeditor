@@ -1,7 +1,7 @@
 """Main FastAPI application entry point for Gazebo Studio Backend"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import health
+from app.routes import health, world
 
 app = FastAPI(
     title="Gazebo Studio Backend",
@@ -23,6 +23,7 @@ app.add_middleware(
 
 # Include routes
 app.include_router(health.router)
+app.include_router(world.router)
 
 
 if __name__ == "__main__":
